@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/providers/auth_provider.dart';
+import '../auth/login_screen.dart';
 
-class DiscoveryScreen extends StatefulWidget {
+class DiscoveryScreen extends ConsumerStatefulWidget {
   const DiscoveryScreen({super.key});
 
   @override
-  State<DiscoveryScreen> createState() => _DiscoveryScreenState();
+  ConsumerState<DiscoveryScreen> createState() => _DiscoveryScreenState();
 }
 
 class DiscoveryItem {
@@ -27,7 +30,7 @@ class DiscoveryItem {
   });
 }
 
-class _DiscoveryScreenState extends State<DiscoveryScreen> with SingleTickerProviderStateMixin {
+class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> with SingleTickerProviderStateMixin {
   late PageController _pageController;
   late AnimationController _waveController;
   Timer? _progressTimer;
@@ -216,6 +219,21 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> with SingleTickerProv
           final isSelected = _selectedCategory == category;
           return GestureDetector(
             onTap: () {
+              if (category == '收藏') {
+                final authState = ref.read(authProvider);
+                if (!authState.isAuthenticated) {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const FractionallySizedBox(
+                      heightFactor: 0.9,
+                      child: LoginScreen(),
+                    ),
+                  );
+                  return;
+                }
+              }
               setState(() {
                 _selectedCategory = category;
                 _playProgress = 0.0;

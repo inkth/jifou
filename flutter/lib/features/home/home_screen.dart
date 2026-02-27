@@ -11,6 +11,8 @@ import '../../core/providers/records_provider.dart';
 import '../../core/widgets/skeleton_loader.dart';
 import '../../models/record_model.dart';
 import 'widgets/mini_game_card.dart';
+import '../auth/login_screen.dart';
+import '../../core/providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -58,6 +60,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  bool _checkAuth() {
+    final authState = ref.read(authProvider);
+    if (!authState.isAuthenticated) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => const FractionallySizedBox(
+          heightFactor: 0.9,
+          child: LoginScreen(),
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
   // 初始化语音识别
   void _initSpeech() async {
     _speechEnabled = await _speechToText.initialize(
@@ -69,6 +88,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // 开始语音识别
   void _startListening() async {
+    if (!_checkAuth()) return;
+    
     if (!_speechEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('语音识别暂不可用，请检查权限设置')),
@@ -93,6 +114,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // 停止语音识别
   void _stopListening() async {
+    if (!_isRecording) return;
+    
     await _speechToText.stop();
     setState(() {
       _isRecording = false;
@@ -120,6 +143,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // 拍照功能
   Future<void> _takePhoto() async {
+    if (!_checkAuth()) return;
+    
     try {
       final XFile? photo = await _imagePicker.pickImage(
         source: ImageSource.camera,
@@ -149,6 +174,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // 从相册选择图片
   Future<void> _pickFromGallery() async {
+    if (!_checkAuth()) return;
+    
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -178,6 +205,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // 文字输入功能
   void _showTextInputDialog() {
+    if (!_checkAuth()) return;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
