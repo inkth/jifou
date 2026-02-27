@@ -1,13 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import '../models/record_model.dart';
+import 'dio_client.dart';
 
 class ApiService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://localhost:8000', // MVP 联调地址
-    connectTimeout: const Duration(seconds: 5),
-    receiveTimeout: const Duration(seconds: 3),
-  ));
+  final Dio _dio = DioClient.instance;
+  String get baseUrl => _dio.options.baseUrl;
 
   Future<RecordModel> createRecord(String content, {String type = 'text'}) async {
     try {

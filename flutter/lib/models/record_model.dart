@@ -1,5 +1,14 @@
+import 'package:isar/isar.dart';
+
+part 'record_model.g.dart';
+
+@collection
 class RecordModel {
+  Id? isarId; // Isar 内部 ID
+
+  @Index(unique: true, replace: true)
   final String id;
+  
   final String content;
   final String recordType;
   final DateTime createdAt;
@@ -13,6 +22,7 @@ class RecordModel {
     required this.createdAt,
     required this.emotionScore,
     required this.categories,
+    this.isarId,
   });
 
   factory RecordModel.fromJson(Map<String, dynamic> json) {
@@ -28,8 +38,12 @@ class RecordModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'content': content,
       'record_type': recordType,
+      'created_at': createdAt.toIso8601String(),
+      'emotion_score': emotionScore,
+      'categories': categories,
     };
   }
 }

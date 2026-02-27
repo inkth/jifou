@@ -8,6 +8,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/starry_background.dart';
 import '../../core/widgets/ripple_animation.dart';
 import '../../core/providers/records_provider.dart';
+import '../../core/widgets/skeleton_loader.dart';
+import '../../models/record_model.dart';
+import 'widgets/mini_game_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -320,6 +323,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(height: 40),
                       _buildMinimalHeader(),
                       const SizedBox(height: 32),
+                      const MiniGameCard(),
+                      const SizedBox(height: 32),
                       _buildRecentRecordsSection(recordsAsync),
                     ],
                   ),
@@ -334,18 +339,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildRecentRecordsSection(AsyncValue<List<dynamic>> recordsAsync) {
+  Widget _buildRecentRecordsSection(AsyncValue<List<RecordModel>> recordsAsync) {
     return recordsAsync.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+      loading: () => Column(
+        children: List.generate(3, (index) => const RecordSkeleton()),
       ),
-      error: (error, stack) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text('加载失败: $error', style: const TextStyle(color: Colors.white38)),
-      ),
+      error: (error, stack) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+                const SizedBox(height: 12),
+                Text(
+                  '加载失败: $error',
+                  style: const TextStyle(color: Colors.white54, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                TextButton(
+                  onPressed: () => ref.read(recordsProvider.notifier).fetchRecords(),
+                  child: const Text('重试', style: TextStyle(color: AppColors.primary)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
       data: (records) {
         if (records.isEmpty) {
           return const Padding(

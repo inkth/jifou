@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from .api import records, reports
+from fastapi.responses import JSONResponse
+from .api import records, reports, auth
 from .core.database import engine, Base
 
 # 创建数据库表 (MVP 阶段简单处理，生产环境建议使用 Alembic)
@@ -21,6 +22,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"message": "服务器内部错误", "detail": str(exc)},
+    )
+
 @app.get("/")
 async def root():
     return {
@@ -33,6 +41,7 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
+app.include_router(auth.router)
 app.include_router(records.router)
 app.include_router(reports.router)
 

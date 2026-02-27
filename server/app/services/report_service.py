@@ -9,9 +9,12 @@ class ReportService:
     报告业务逻辑类
     """
     
-    async def get_or_generate_daily_report(self, db: Session, target_date: date) -> Optional[DailyReportModel]:
+    async def get_or_generate_daily_report(self, db: Session, target_date: date, user_id: str) -> Optional[DailyReportModel]:
         # 1. 检查是否已存在报告
-        existing_report = db.query(DailyReportModel).filter(DailyReportModel.date == target_date).first()
+        existing_report = db.query(DailyReportModel).filter(
+            DailyReportModel.date == target_date,
+            DailyReportModel.user_id == user_id
+        ).first()
         if existing_report:
             return existing_report
             
@@ -20,6 +23,7 @@ class ReportService:
         end_of_day = datetime.combine(target_date, time.max)
         
         records = db.query(RecordModel).filter(
+            RecordModel.user_id == user_id,
             RecordModel.created_at >= start_of_day,
             RecordModel.created_at <= end_of_day
         ).all()
@@ -32,6 +36,7 @@ class ReportService:
         
         # 4. 保存报告到数据库
         new_report = DailyReportModel(
+            user_id=user_id,
             date=target_date,
             life_index=ai_report["life_index"],
             health_score=ai_report["health_score"],

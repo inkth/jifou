@@ -119,7 +119,15 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                       children: records.take(3).map((RecordModel r) => _buildRecordCard(r)).toList(),
                     ),
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Text('加载失败: $e'),
+                    error: (e, _) {
+                      // 错误时不显示错误信息，而是启动重试机制
+                      Future.delayed(const Duration(seconds: 3), () {
+                        if (context.mounted) {
+                          ref.read(recordsProvider.notifier).fetchRecords();
+                        }
+                      });
+                      return const Center(child: CircularProgressIndicator());
+                    },
                   ),
                 ],
               ),
