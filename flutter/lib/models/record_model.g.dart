@@ -42,9 +42,24 @@ const RecordModelSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'recordType': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 5,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'localCreatedAt': PropertySchema(
+      id: 6,
+      name: r'localCreatedAt',
+      type: IsarType.dateTime,
+    ),
+    r'recordType': PropertySchema(
+      id: 7,
       name: r'recordType',
+      type: IsarType.string,
+    ),
+    r'userId': PropertySchema(
+      id: 8,
+      name: r'userId',
       type: IsarType.string,
     )
   },
@@ -92,6 +107,12 @@ int _recordModelEstimateSize(
   bytesCount += 3 + object.content.length * 3;
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.recordType.length * 3;
+  {
+    final value = object.userId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -106,7 +127,10 @@ void _recordModelSerialize(
   writer.writeDateTime(offsets[2], object.createdAt);
   writer.writeDouble(offsets[3], object.emotionScore);
   writer.writeString(offsets[4], object.id);
-  writer.writeString(offsets[5], object.recordType);
+  writer.writeBool(offsets[5], object.isSynced);
+  writer.writeDateTime(offsets[6], object.localCreatedAt);
+  writer.writeString(offsets[7], object.recordType);
+  writer.writeString(offsets[8], object.userId);
 }
 
 RecordModel _recordModelDeserialize(
@@ -121,8 +145,11 @@ RecordModel _recordModelDeserialize(
     createdAt: reader.readDateTime(offsets[2]),
     emotionScore: reader.readDouble(offsets[3]),
     id: reader.readString(offsets[4]),
+    isSynced: reader.readBoolOrNull(offsets[5]) ?? false,
     isarId: id,
-    recordType: reader.readString(offsets[5]),
+    localCreatedAt: reader.readDateTimeOrNull(offsets[6]),
+    recordType: reader.readString(offsets[7]),
+    userId: reader.readStringOrNull(offsets[8]),
   );
   return object;
 }
@@ -145,7 +172,13 @@ P _recordModelDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 6:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 7:
       return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -957,6 +990,16 @@ extension RecordModelQueryFilter
     });
   }
 
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition> isSyncedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition> isarIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1020,6 +1063,80 @@ extension RecordModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'isarId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      localCreatedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'localCreatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      localCreatedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'localCreatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      localCreatedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'localCreatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      localCreatedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'localCreatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      localCreatedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'localCreatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      localCreatedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'localCreatedAt',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1163,6 +1280,157 @@ extension RecordModelQueryFilter
       ));
     });
   }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition> userIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'userId',
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      userIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'userId',
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition> userIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      userIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition> userIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition> userIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'userId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      userIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition> userIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition> userIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition> userIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'userId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      userIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterFilterCondition>
+      userIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'userId',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension RecordModelQueryObject
@@ -1222,6 +1490,31 @@ extension RecordModelQuerySortBy
     });
   }
 
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> sortByLocalCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localCreatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy>
+      sortByLocalCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localCreatedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<RecordModel, RecordModel, QAfterSortBy> sortByRecordType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'recordType', Sort.asc);
@@ -1231,6 +1524,18 @@ extension RecordModelQuerySortBy
   QueryBuilder<RecordModel, RecordModel, QAfterSortBy> sortByRecordTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'recordType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> sortByUserId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> sortByUserIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.desc);
     });
   }
 }
@@ -1286,6 +1591,18 @@ extension RecordModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<RecordModel, RecordModel, QAfterSortBy> thenByIsarId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isarId', Sort.asc);
@@ -1298,6 +1615,19 @@ extension RecordModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> thenByLocalCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localCreatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy>
+      thenByLocalCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localCreatedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<RecordModel, RecordModel, QAfterSortBy> thenByRecordType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'recordType', Sort.asc);
@@ -1307,6 +1637,18 @@ extension RecordModelQuerySortThenBy
   QueryBuilder<RecordModel, RecordModel, QAfterSortBy> thenByRecordTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'recordType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> thenByUserId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QAfterSortBy> thenByUserIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.desc);
     });
   }
 }
@@ -1345,10 +1687,29 @@ extension RecordModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<RecordModel, RecordModel, QDistinct> distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QDistinct> distinctByLocalCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'localCreatedAt');
+    });
+  }
+
   QueryBuilder<RecordModel, RecordModel, QDistinct> distinctByRecordType(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'recordType', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<RecordModel, RecordModel, QDistinct> distinctByUserId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'userId', caseSensitive: caseSensitive);
     });
   }
 }
@@ -1392,9 +1753,28 @@ extension RecordModelQueryProperty
     });
   }
 
+  QueryBuilder<RecordModel, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
+    });
+  }
+
+  QueryBuilder<RecordModel, DateTime?, QQueryOperations>
+      localCreatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'localCreatedAt');
+    });
+  }
+
   QueryBuilder<RecordModel, String, QQueryOperations> recordTypeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'recordType');
+    });
+  }
+
+  QueryBuilder<RecordModel, String?, QQueryOperations> userIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'userId');
     });
   }
 }

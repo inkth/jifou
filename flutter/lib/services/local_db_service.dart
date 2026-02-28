@@ -23,9 +23,47 @@ class LocalDbService {
     });
   }
 
-  static Future<List<RecordModel>> getRecords() async {
+  static Future<void> saveRecord(RecordModel record) async {
     final isar = await instance;
-    return await isar.recordModels.where().sortByCreatedAtDesc().findAll();
+    await isar.writeTxn(() async {
+      await isar.recordModels.put(record);
+    });
+  }
+
+  static Future<List<RecordModel>> getRecords({String? userId}) async {
+    final isar = await instance;
+    if (userId == null) {
+      return await isar.recordModels.filter().userIdIsNull().sortByCreatedAtDesc().findAll();
+    } else {
+      return await isar.recordModels.filter().userIdEqualTo(userId).sortByCreatedAtDesc().findAll();
+    }
+  }
+
+  static Future<List<RecordModel>> getUnsyncedRecords() async {
+    final isar = await instance;
+    return await isar.recordModels.filter().isSyncedEqualTo(false).findAll();
+  }
+
+  static Future<void> updateSyncStatus(List<String> ids, bool synced, {String? userId}) async {
+    final isar = await instance;
+    await isar.writeTxn(() async {
+      for (final id in ids) {
+        final record = await isar.recordModels.filter().idEqualTo(id).findFirst();
+        if (record != null) {
+          // Use copyWith to update fields while keeping isarId
+          final updated = record.copyWith(isSynced: synced, userId: userId);
+          updated.isarId = record.isarId;
+          await isar.recordModels.put(updated);
+        }
+      }
+    });
+  }
+
+  static Future<void> deleteRecord(String id) async {
+    final isar = await instance;
+    await isar.writeTxn(() async {
+      await isar.recordModels.filter().idEqualTo(id).deleteAll();
+    });
   }
 
   static Future<void> clearAll() async {

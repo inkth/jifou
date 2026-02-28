@@ -219,21 +219,6 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> with SingleTi
           final isSelected = _selectedCategory == category;
           return GestureDetector(
             onTap: () {
-              if (category == '收藏') {
-                final authState = ref.read(authProvider);
-                if (!authState.isAuthenticated) {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => const FractionallySizedBox(
-                      heightFactor: 0.9,
-                      child: LoginScreen(),
-                    ),
-                  );
-                  return;
-                }
-              }
               setState(() {
                 _selectedCategory = category;
                 _playProgress = 0.0;

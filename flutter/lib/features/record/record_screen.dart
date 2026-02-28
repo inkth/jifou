@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/ripple_animation.dart';
 import '../../core/providers/records_provider.dart';
@@ -15,35 +16,65 @@ class RecordScreen extends ConsumerStatefulWidget {
 class _RecordScreenState extends ConsumerState<RecordScreen> {
   bool _isRecording = false;
   String _statusText = "说一句今天发生的事";
+  late stt.SpeechToText _speech;
+  String _lastWords = '';
 
-  void _startRecording() {
-    setState(() {
-      _isRecording = true;
-      _statusText = "正在倾听...";
-    });
+  @override
+  void initState() {
+    super.initState();
+    _speech = stt.SpeechToText();
   }
 
-  void _stopRecording() {
+  Future<void> _startRecording() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) => debugPrint('Speech status: $status'),
+      onError: (errorNotification) => debugPrint('Speech error: $errorNotification'),
+    );
+
+    if (available) {
+      setState(() {
+        _isRecording = true;
+        _statusText = "正在倾听...";
+        _lastWords = '';
+      });
+      _speech.listen(
+        onResult: (result) {
+          setState(() {
+            _lastWords = result.recognizedWords;
+            if (_lastWords.isNotEmpty) {
+              _statusText = _lastWords;
+            }
+          });
+        },
+        localeId: 'zh_CN',
+      );
+    } else {
+      setState(() {
+        _statusText = "语音识别不可用，请检查权限";
+      });
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    await _speech.stop();
     setState(() {
       _isRecording = false;
-      _statusText = "正在识别...";
+      _statusText = _lastWords.isNotEmpty ? "正在记录..." : "未识别到语音";
     });
-    
-    // 模拟语音转文字后的提交
-    Future.delayed(const Duration(seconds: 1), () async {
-      const mockContent = "今天的心情非常不错，完成了 API 对接。";
-      await ref.read(recordsProvider.notifier).addRecord(mockContent, 'voice');
-      
+
+    if (_lastWords.isNotEmpty) {
+      await ref.read(recordsProvider.notifier).addRecord(_lastWords, 'voice');
       if (mounted) {
         setState(() {
-          _statusText = "识别成功，已记录";
+          _statusText = "记录成功";
         });
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            setState(() {
-              _statusText = "说一句今天发生的事";
-            });
-          }
+      }
+    }
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _statusText = "说一句今天发生的事";
         });
       }
     });

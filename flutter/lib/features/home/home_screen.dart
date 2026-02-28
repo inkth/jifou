@@ -61,19 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   bool _checkAuth() {
-    final authState = ref.read(authProvider);
-    if (!authState.isAuthenticated) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => const FractionallySizedBox(
-          heightFactor: 0.9,
-          child: LoginScreen(),
-        ),
-      );
-      return false;
-    }
+    // 本地优先策略：不再强制要求登录才能记录
     return true;
   }
 

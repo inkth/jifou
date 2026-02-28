@@ -8,8 +8,8 @@ class UserModel(Base):
     __tablename__ = "users"
 
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    phone_number = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=True)
     full_name = Column(String)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.now)

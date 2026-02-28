@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/providers/auth_provider.dart';
+import '../auth/login_screen.dart';
 import 'message_detail_screen.dart';
 
 class MessagesScreen extends ConsumerWidget {
@@ -8,6 +10,8 @@ class MessagesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -17,18 +21,20 @@ class MessagesScreen extends ConsumerWidget {
             _buildHeader(context),
             const SizedBox(height: 24),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                children: [
-                  _buildMessageItem(
-                    context,
-                    '系统通知',
-                    '欢迎来到记否！开始记录你的第一条生活感悟吧。',
-                    '10:30',
-                    Icons.campaign,
-                    AppColors.primary,
-                    isUnread: true,
-                  ),
+              child: !authState.isAuthenticated
+                  ? _buildLoginPrompt(context)
+                  : ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      children: [
+                        _buildMessageItem(
+                          context,
+                          '系统通知',
+                          '欢迎来到记否！开始记录你的第一条生活感悟吧。',
+                          '10:30',
+                          Icons.campaign,
+                          AppColors.primary,
+                          isUnread: true,
+                        ),
                   _buildMessageItem(
                     context,
                     'AI 助手',
@@ -71,6 +77,73 @@ class MessagesScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginPrompt(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.chat_bubble_outline,
+                size: 64,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              '登录查看消息',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '登录后即可接收系统通知、AI 助手建议以及更多精彩内容。',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => const FractionallySizedBox(
+                    heightFactor: 0.9,
+                    child: LoginScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: const Text('立即登录'),
             ),
           ],
         ),

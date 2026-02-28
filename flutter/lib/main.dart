@@ -7,8 +7,6 @@ import 'features/home/home_screen.dart';
 import 'features/report/discovery_screen.dart';
 import 'features/profile/messages_screen.dart';
 import 'features/profile/profile_screen.dart';
-import 'features/auth/login_screen.dart';
-import 'core/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,14 +63,6 @@ class MainScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(navigationIndexProvider);
-    final authState = ref.watch(authProvider);
-
-    // Listen for auth state changes to redirect from protected tabs on logout
-    ref.listen<AuthState>(authProvider, (previous, next) {
-      if (!next.isAuthenticated && (selectedIndex == 2 || selectedIndex == 3)) {
-        ref.read(navigationIndexProvider.notifier).state = 0;
-      }
-    });
 
     return Scaffold(
       body: IndexedStack(
@@ -82,20 +72,7 @@ class MainScreen extends ConsumerWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: (index) {
-          // Check if the tab requires authentication
-          if ((index == 2 || index == 3) && !authState.isAuthenticated) {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) => const FractionallySizedBox(
-                heightFactor: 0.9,
-                child: LoginScreen(),
-              ),
-            );
-          } else {
-            ref.read(navigationIndexProvider.notifier).state = index;
-          }
+          ref.read(navigationIndexProvider.notifier).state = index;
         },
         items: const [
           BottomNavigationBarItem(

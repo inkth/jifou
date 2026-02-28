@@ -6,6 +6,7 @@ import '../../models/record_model.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import '../../core/providers/auth_provider.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -18,6 +19,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final recordsAsync = ref.watch(recordsProvider);
+    final authState = ref.watch(authProvider);
     
     return Scaffold(
       body: NestedScrollView(
@@ -29,7 +31,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               pinned: true,
               backgroundColor: Colors.black,
               flexibleSpace: FlexibleSpaceBar(
-                background: _buildHeaderBackground(context),
+                background: _buildHeaderBackground(context, authState),
                 collapseMode: CollapseMode.pin,
               ),
               actions: [
@@ -42,12 +44,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     );
                   },
                 ),
-                IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.redAccent),
-                  onPressed: () {
-                    ref.read(authProvider.notifier).logout();
-                  },
-                ),
+                if (authState.isAuthenticated)
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.redAccent),
+                    onPressed: () {
+                      ref.read(authProvider.notifier).logout();
+                    },
+                  ),
               ],
             ),
             SliverToBoxAdapter(
@@ -79,7 +82,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildHeaderBackground(BuildContext context) {
+  Widget _buildHeaderBackground(BuildContext context, AuthState authState) {
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -126,37 +129,64 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   const Spacer(),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen()));
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white24),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  if (authState.isAuthenticated)
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen()));
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white24),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      child: const Text('编辑资料'),
                     ),
-                    child: const Text('编辑资料'),
-                  ),
                 ],
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Roo Engineer',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              Text(
+                authState.isAuthenticated ? (authState.user?['full_name'] ?? '用户') : '未登录',
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text(
-                '探索内心世界，记录成长点滴。专注于 AI 与人类认知的结合。',
-                style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+              Text(
+                authState.isAuthenticated 
+                    ? '探索内心世界，记录成长点滴。' 
+                    : '登录后可将记录同步至云端，永不丢失。',
+                style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
               ),
+              if (!authState.isAuthenticated)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const FractionallySizedBox(
+                          heightFactor: 0.9,
+                          child: LoginScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    child: const Text('立即登录'),
+                  ),
+                ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  _buildTag('Pro 会员', const Color(0xFFD4AF37)),
-                  const SizedBox(width: 8),
-                  _buildTag('记录达人', AppColors.primary),
-                ],
-              ),
+              if (authState.isAuthenticated)
+                Row(
+                  children: [
+                    _buildTag('Pro 会员', const Color(0xFFD4AF37)),
+                    const SizedBox(width: 8),
+                    _buildTag('记录达人', AppColors.primary),
+                  ],
+                ),
             ],
           ),
         ),
@@ -298,6 +328,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _formatDate(record.createdAt),
                       style: const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
+                    const Spacer(),
+                    if (!record.isSynced)
+                      const Icon(Icons.sync_problem, color: Colors.orangeAccent, size: 16),
                   ],
                 ),
                 const SizedBox(height: 8),

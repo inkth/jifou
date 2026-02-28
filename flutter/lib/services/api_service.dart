@@ -59,6 +59,35 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<void> sendOtp(String phoneNumber) async {
+    try {
+      await _dio.post('/send-otp', data: {'phone_number': phoneNumber});
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<String> login(String phoneNumber, String code) async {
+    try {
+      final response = await _dio.post('/login', data: {
+        'phone_number': phoneNumber,
+        'code': code,
+      });
+      return response.data['access_token'];
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getCurrentUser() async {
+    try {
+      final response = await _dio.get('/me');
+      return response.data;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 final apiService = ApiService();
