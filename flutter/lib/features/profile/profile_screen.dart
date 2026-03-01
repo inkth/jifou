@@ -21,63 +21,76 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final recordsAsync = ref.watch(recordsProvider);
     final authState = ref.watch(authProvider);
     
-    return Scaffold(
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              expandedHeight: 340,
-              floating: false,
-              pinned: true,
-              backgroundColor: Colors.black,
-              flexibleSpace: FlexibleSpaceBar(
-                background: _buildHeaderBackground(context, authState),
-                collapseMode: CollapseMode.pin,
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.settings_outlined),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                    );
-                  },
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                expandedHeight: 340,
+                floating: false,
+                pinned: true,
+                backgroundColor: Colors.black,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: _buildHeaderBackground(context, authState),
+                  collapseMode: CollapseMode.pin,
                 ),
-                if (authState.isAuthenticated)
+                actions: [
                   IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.redAccent),
+                    icon: const Icon(Icons.settings_outlined),
                     onPressed: () {
-                      ref.read(authProvider.notifier).logout();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                      );
                     },
                   ),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: _buildStatsRow(recordsAsync),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '我的卡片',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                  if (authState.isAuthenticated)
+                    IconButton(
+                      icon: const Icon(Icons.logout, color: Colors.redAccent),
+                      onPressed: () {
+                        ref.read(authProvider.notifier).logout();
+                      },
                     ),
-                    const SizedBox(height: 16),
-                  ],
+                ],
+              ),
+              SliverToBoxAdapter(
+                child: _buildStatsRow(recordsAsync),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TabBar(
+                        isScrollable: true,
+                        dividerColor: Colors.transparent,
+                        indicatorColor: AppColors.primary,
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Colors.white54,
+                        labelStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        unselectedLabelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+                        tabs: const [
+                          Tab(text: '人生记录'),
+                          Tab(text: '我的卡片'),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ];
-        },
-        body: _buildCardsTab(recordsAsync),
+            ];
+          },
+          body: TabBarView(
+            children: [
+              _buildLifePathTab(),
+              _buildCardsTab(recordsAsync),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -221,6 +234,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildStatItem('850', '记豆'),
+          _buildStatItem('12', '记录'),
           _buildStatItem(count, '卡片'),
         ],
       ),
@@ -345,6 +359,144 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLifePathTab() {
+    final List<Map<String, String>> lifePathItems = [
+      {
+        'date': '2024-02-28',
+        'title': '灵感涌现的一天',
+        'content': '今天你在清晨记录了一段关于未来城市的构想，AI 感受到你内心深处对科技与自然和谐共生的向往。',
+        'type': 'insight',
+      },
+      {
+        'date': '2024-02-25',
+        'title': '情绪的起伏',
+        'content': '连续三天的深夜记录显示你近期压力较大，建议适当放松，听听轻音乐。',
+        'type': 'mood',
+      },
+      {
+        'date': '2024-02-20',
+        'title': '突破自我',
+        'content': '你完成了一次长达 30 分钟的语音随笔，这是你记录以来最长的一次，展现了极强的表达欲。',
+        'type': 'achievement',
+      },
+      {
+        'date': '2024-02-15',
+        'title': '财富观的转变',
+        'content': '通过对多篇财富类记录的分析，AI 发现你开始从关注短期收益转向长期价值投资。',
+        'type': 'wealth',
+      },
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      itemCount: lifePathItems.length,
+      itemBuilder: (context, index) {
+        return _buildLifePathItem(lifePathItems[index], index == lifePathItems.length - 1);
+      },
+    );
+  }
+
+  Widget _buildLifePathItem(Map<String, String> item, bool isLast) {
+    IconData icon;
+    Color color;
+    switch (item['type']) {
+      case 'insight':
+        icon = Icons.lightbulb_outline;
+        color = Colors.amber;
+        break;
+      case 'mood':
+        icon = Icons.favorite_border;
+        color = Colors.pinkAccent;
+        break;
+      case 'achievement':
+        icon = Icons.emoji_events_outlined;
+        color = Colors.orangeAccent;
+        break;
+      case 'wealth':
+        icon = Icons.account_balance_wallet_outlined;
+        color = Colors.greenAccent;
+        break;
+      default:
+        icon = Icons.auto_awesome_outlined;
+        color = AppColors.primary;
+    }
+
+    return IntrinsicHeight(
+      child: Row(
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: color.withOpacity(0.3)),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: Colors.white10,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      item['title']!,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      item['date']!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  ),
+                  child: Text(
+                    item['content']!,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
